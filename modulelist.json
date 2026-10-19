@@ -1,0 +1,39 @@
+[
+  {
+    "disableAutoUpdate": false,
+    "name": "skill-prediction",
+    "author": "Pinkie Pie / many others (46.05 port for PlayTera)",
+    "description": "Simulates skills client-side, eliminating ping-based delays and animation lock. Built for PlayTera (patch 46.05).",
+    "version": "1.0.0-46.05",
+    "servers": [
+      "https://raw.githubusercontent.com/ImakPwnz/playtera-mods/main/skill-prediction/"
+    ],
+    "options": {
+      "guiName": "Skill Prediction (PlayTera 46.05)",
+      "cliName": "PSP"
+    },
+    "conflicts": [
+      "psp",
+      "psp31",
+      "aa-zsync",
+      "cooldowns",
+      "cooldowns-master",
+      "fastfire",
+      "fastfire-master",
+      "fast-fire",
+      "fast-fire-master",
+      "lockons",
+      "lockons-master",
+      "lockons-light",
+      "lockons-light-master",
+      "ping-compensation",
+      "ping-remover",
+      "skill-prediction-master",
+      "skill-prediction-plus"
+    ],
+    "supportUrl": "https://playtera.to",
+    "keywords": [
+      "network"
+    ]
+  }
+]
