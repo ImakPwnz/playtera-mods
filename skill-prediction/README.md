@@ -21,6 +21,22 @@ Skill Prediction does **not** lower your ping. It hides the delay between pressi
 - `/8 sp` – list of commands
 - `/8 sp ping` – ping statistics
 - `/8 sp debug` – skill debugging (also `debug loc`, `debug abnormal`)
+- `/8 sp pvp` – status of the PvP pause (see below); `pvp on|off`, `pvp bg on|off`, `pvp channel 2[,3]|off`,
+  `pvp lang en|de|ru`
+
+## PvP pause (battlegrounds and channel 2)
+
+Prediction plays skills before the server confirms them. Against other players this is visible as desync, so the
+module pauses itself automatically:
+
+- in every battleground (continents with `channelType="battleField"`, list in `config/battlegrounds.json`),
+- in the open world on the PvP channel – **channel 2** as displayed in game (`pvp.channels` in `settings.json`,
+  `channelZones` can limit the rule to certain zones).
+
+While paused every skill is handled by the server only, exactly as without the module; the pause ends on the
+next zone load / channel change. A chat notice (English, German or Russian – `pvp.language`) tells you when it
+pauses and resumes; `pvp notify` can be switched off in `settings.json`. `/8 sp pvp off` disables the pause
+completely if you prefer prediction in PvP.
 
 ## What was changed for 46.05
 
@@ -57,4 +73,7 @@ Modul für die TERA Toolbox, das Skills clientseitig vorwegnimmt, nur für PlayT
 Ordner `<Toolbox>\mods\skill-prediction` anlegen und nur `module.json` hineinlegen – die Toolbox lädt den Rest selbst
 und hält das Modul aktuell. Andere Skill-Prediction-Varianten entfernen, Toolbox neu starten.
 Die Skilldaten stammen aus den 46.05-Serverdaten; Skills ohne verlässliche Daten werden nicht vorhergesagt.
+**PvP-Pause:** In Schlachtfeldern und in der offenen Welt auf Channel 2 (PvP) schaltet sich die Vorhersage von
+selbst ab, weil sie dort Desync verursacht; eine Chatmeldung (Sprache per `/8 sp pvp lang de`) zeigt das an.
+`/8 sp pvp` zeigt den Zustand, `/8 sp pvp off` schaltet die Pause ganz ab.
 Werkzeuge zum Neuerzeugen der Daten und der Prüfstand liegen in `_werkzeuge` (werden nicht an Spieler verteilt).

@@ -27,6 +27,14 @@ const DefaultSettings = {
 		timeout:	30000,	//	Milliseconds to wait before giving up and retrying ping.
 		maxHistory: 20		//	Maximum number of ping samples used to calculate min/max/avg values.
 	},
+	pvp: {
+		enabled:		true,	//	Pause prediction where it causes desync against other players (command: sp pvp on|off).
+		battlegrounds:	true,	//	Pause in every battleground (continents from config/battlegrounds.json).
+		channels:		[2],	//	Pause on these open-world channels (numbers as displayed in game). PlayTera: channel 2 = PvP.
+		channelZones:	[],		//	Limit the channel rule to these zone ids (empty = every zone that has channels).
+		notify:			true,	//	Chat notice when prediction pauses/resumes.
+		language:		'en'	//	Notice language: en, de, ru
+	},
 	debug: {
 		skills:			false,
 		loc:			false,

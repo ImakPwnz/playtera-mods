@@ -6,7 +6,7 @@
     "options": {
         "guiName": "Skill Prediction (PlayTera 46.05)",
         "cliName": "PSP",
-        "settingsVersion": 4,
+        "settingsVersion": 5,
         "settingsFile": "settings.json",
         "settingsMigrator": "migration.js"
     },
@@ -33,5 +33,5 @@
         "skill-prediction-master",
         "skill-prediction-plus"
     ],
-    "version": "1.0.0-46.05"
+    "version": "1.1.0-46.05"
 }

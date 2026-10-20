@@ -52,7 +52,8 @@ module.exports = function SPCore(mod) {
 	const player = subMod(mod, './player'),
 		ping = subMod(mod, './ping'),
 		abnormality = subMod(mod, './abnormalities'),
-		cooldowns = subMod(mod, './cooldowns')
+		cooldowns = subMod(mod, './cooldowns'),
+		pvp = subMod(mod, './pvp')
 
 	// Global
 	let sending = false,
@@ -100,13 +101,21 @@ module.exports = function SPCore(mod) {
 
 	mod.hook('S_LOAD_TOPO', 'raw', () => {
 		vehicleEx = null
+		resetActionState()
+	})
+
+	// Prediction pauses/resumes (battleground, PvP channel): drop the emulated action like on a zone load,
+	// otherwise a half-emulated skill would be finished by the wrong side.
+	pvp.onChange(() => { resetActionState() })
+
+	function resetActionState() {
 		clientAction = null
 		serverAction = null
 		lastEndSkill = null
 		lastEndReason = 0
 		lastEndedId = 0
 		sendActionEnd(37)
-	})
+	}
 
 	mod.hook('S_SPAWN_ME', 3, {order: 100, filter: {fake: null}}, event => {
 		updatePosition(event)
@@ -1490,6 +1499,7 @@ module.exports = function SPCore(mod) {
 
 	function skillInfo(skill) {
 		if (!skillsClient) return null;
+		if(pvp.suspended) return null // battleground / PvP channel: every skill is handled by the server only
 		if(!(skill instanceof SkillID)) skill = new SkillID(skill)
 
 		if(skill.type !== TYPE_ACTION) return null

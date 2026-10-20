@@ -1,5 +1,5 @@
 {
-    "version": 4,
+    "version": 5,
     "data": {
         "skills": {
             "jitterCompensation": true,
@@ -18,6 +18,14 @@
             "interval": 8000,
             "timeout": 33000,
             "maxHistory": 14
+        },
+        "pvp": {
+            "enabled": true,
+            "battlegrounds": true,
+            "channels": [2],
+            "channelZones": [],
+            "notify": true,
+            "language": "en"
         },
         "debug": {
             "skills": false,

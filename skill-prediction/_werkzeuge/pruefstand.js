@@ -197,6 +197,52 @@ for (const [tpl, ss] of Object.entries(skillsData)) {
 	}
 }
 
+// ---------------------------------------------------------------- PvP-Sperre (Schlachtfeld / PvP-Channel)
+// Erwartung: in Schlachtfeld-Kontinenten und auf dem sichtbaren Channel 2 (intern 1) wird nichts vorhergesagt,
+// das Startpaket geht unverändert an den Server; sonst (Dungeon ohne S_CURRENT_CHANNEL, Channel 1) wird vorhergesagt.
+const pvpTest = { faelle: [], fehler: [] }
+{
+	const tpl = Object.keys(skillsData).find(t => cfg[Number(t) % 100 - 1]) // erste Vorlage mit Konfiguration
+	const job = Number(tpl) % 100 - 1, ss = skillsData[tpl]
+	const id = Object.keys(ss).map(Number).sort((a, b) => a - b).find(i => { const c = cfgFor(job, i); return c === true && ss[i].dcType === 'normal' && typeof ss[i].length === 'number' })
+	server('S_LOGIN', 12, { templateId: Number(tpl), gameId: GAME_ID, alive: true, level: 65 })
+	server('S_SPAWN_ME', 3, { gameId: GAME_ID, loc: pos, w: 0, alive: true })
+	server('S_PLAYER_STAT_UPDATE', 12, { attackSpeed: 100, attackSpeedBonus: 20, stamina: 5000, staminaMax: 5000 })
+	server('S_INVEN', 18, { gameId: GAME_ID, first: true, more: false, items: [{ id: 10001, slot: 1, amount: 1, passivities: [] }] })
+	server('S_CREST_INFO', 2, { crests: [] })
+	const faelle = [
+		['Dungeon ohne Channel', () => server('S_LOAD_TOPO', 3, { zone: 9999, loc: pos, quick: true }), true],
+		['Schlachtfeld 116', () => server('S_LOAD_TOPO', 3, { zone: 116, loc: pos, quick: true }), false],
+		['Offene Welt 7001, Channel 1 (intern 0)', () => { server('S_LOAD_TOPO', 3, { zone: 7001, loc: pos, quick: true }); server('S_CURRENT_CHANNEL', 1, { zone: 7001, channel: 0, density: 0 }) }, true],
+		['Offene Welt 7001, Channel 2 (intern 1)', () => server('S_CURRENT_CHANNEL', 1, { zone: 7001, channel: 1, density: 0 }), false],
+		['Zurück auf Channel 1', () => server('S_CURRENT_CHANNEL', 1, { zone: 7001, channel: 0, density: 0 }), true],
+		['Channel 2, dann Dungeon ohne Channel', () => { server('S_CURRENT_CHANNEL', 1, { zone: 7001, channel: 1, density: 0 }); server('S_LOAD_TOPO', 3, { zone: 9999, loc: pos, quick: true }) }, true],
+		['Schlachtfeld, Sperre per Einstellung aus', () => { settings.pvp.enabled = false; server('S_LOAD_TOPO', 3, { zone: 116, loc: pos, quick: true }) }, true],
+		['Schlachtfeld, Sperre wieder an', () => { settings.pvp.enabled = true; server('S_LOAD_TOPO', 3, { zone: 116, loc: pos, quick: true }) }, false],
+		['Ausloggen (S_RETURN_TO_LOBBY) hebt Sperre auf', () => { dispatch.handle(Buffer.from([4, 0, dispatch.protocolMap.name.get('S_RETURN_TO_LOBBY') & 0xff, dispatch.protocolMap.name.get('S_RETURN_TO_LOBBY') >> 8]), true, false); server('S_LOGIN', 12, { templateId: Number(tpl), gameId: GAME_ID, alive: true, level: 65 }); server('S_SPAWN_ME', 3, { gameId: GAME_ID, loc: pos, w: 0, alive: true }); server('S_PLAYER_STAT_UPDATE', 12, { attackSpeed: 100, attackSpeedBonus: 20, stamina: 5000, staminaMax: 5000 }); server('S_INVEN', 18, { gameId: GAME_ID, first: true, more: false, items: [{ id: 10001, slot: 1, amount: 1, passivities: [] }] }); server('S_CREST_INFO', 2, { crests: [] }) }, true],
+	]
+	for (const [name, setup, erwartetVorhersage] of faelle) {
+		const msgBefore = messages.length
+		setup(); advance(100)
+		toClient.length = 0; toServer.length = 0
+		const forwarded = client('C_START_SKILL', 7, startPacket('C_START_SKILL', id))
+		if (!toClient.length) advance(60)
+		const stage = toClient.map(parseOut).find(p => p.name === 'S_ACTION_STAGE')
+		const vorhergesagt = !!stage
+		// Serverpakete: bei Sperre müssen sie durchgehen, sonst verschluckt werden
+		advance(30)
+		const fw = server('S_ACTION_STAGE', 9, { gameId: GAME_ID, loc: pos, w: 0, templateId: Number(tpl), skill: new SkillID({ id, type: 1 }), stage: 0, speed: 1.2, id: 88, effectScale: 1, animSeq: [] })
+		advance(5000)
+		const fe = server('S_ACTION_END', 5, { gameId: GAME_ID, loc: pos, w: 0, templateId: Number(tpl), skill: new SkillID({ id, type: 1 }), type: 0, id: 88 })
+		const ok = vorhergesagt === erwartetVorhersage && (vorhergesagt ? (!fw && !fe) : (fw && fe && forwarded))
+		pvpTest.faelle.push(`${ok ? 'OK ' : 'FEHLER'} ${name}: vorhergesagt=${vorhergesagt} serverStage=${fw} serverEnd=${fe} weitergeleitet=${forwarded} hinweise=${messages.slice(msgBefore).map(m => m.replace(/<[^>]+>/g, '')).join(' | ') || '-'}`)
+		if (!ok) pvpTest.fehler.push(name)
+		advance(45000)
+	}
+	server('S_LOAD_TOPO', 3, { zone: 1, loc: pos, quick: true })
+	for (const f of pvpTest.fehler) stats.fehler.push(`PvP-Sperre: ${f}`)
+}
+
 // Hooks/Sends gegen 46.05 prüfen
 const check = (set) => [...set].map(k => {
 	const [n, v] = k.split('.')
@@ -216,6 +262,7 @@ const out = {
 	serverNichtVerschluckt: stats.endeAbweichung.length, beispiele: stats.endeAbweichung.slice(0, 10),
 	zeitGeprueft: stats.zeitGeprueft, zeitAbweichung: stats.zeitAbweichung.length, zeitBeispiele: stats.zeitAbweichung.slice(0, 10),
 	dgBeispiele: stats.dgBeispiele,
+	pvpSperre: pvpTest.faelle,
 	fehler: stats.fehler.length, fehlerBeispiele: stats.fehler.slice(0, 25),
 	modulAusgaben: process.env.SP_DEBUG ? consoleLog : [...new Set(consoleLog)].slice(0, 20),
 }

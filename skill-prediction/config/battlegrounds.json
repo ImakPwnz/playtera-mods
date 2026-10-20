@@ -1,0 +1,4 @@
+{
+	"source": "ContinentData.xml (PlayTera 46.05), every <Continent channelType=\"battleField\">",
+	"continents": [102, 103, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119]
+}

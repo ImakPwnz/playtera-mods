@@ -1,25 +1,27 @@
 {
 	"files": {
 		"LICENSE": "589ed823e9a84c56feb95ac58e7cf384626b9cbf4fda2a907bc36e103de1bad2",
-		"README.md": "64155b445d45369db8af49225740e607a93af7989011558946c9bad0b7bf8694",
+		"README.md": "91378b47a4b983454ee6e10b8f18652d08ec5e8852ed63b6c395a6647ba52207",
 		"config/abnormalities.js": "9b349e8e6533ee097d898405f787640f38d1c6c3e7d1c2d9be53fd18da0cb11d",
+		"config/battlegrounds.json": "5ec9296ae979f2615f415b96c367b4374161d8f6cd8ed85717562c6b58215717",
 		"config/passivity.json": "9cf2db614e2f56a1566dfd8af75a4ebdf533882f63e1ec636990e234b7206ba9",
 		"config/silence.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
 		"config/skillDataMap.js": "df807faba8557e5d64d3f5fa903a7d2d8a1db620f863910d601ce7683c0c7f0b",
 		"config/skills.js": "8de1c1c51d3ceee9f1ca03c69043f028687a2201d331c8ea1398da4199945662",
 		"config/skills.json": "892cfe70e8279295e87d203307fe84a32e7ae0f3b85f9926ef3f78591c8a6396",
 		"lib/abnormalities.js": "84b3097f2107514e8c8a87b4fe1eadadb1f41b9737ea845f800a57bd1327180d",
-		"lib/commands.js": "5ae1fd616afaf5419d98fe5dbe8dcf98185580a31366fd80d0bca533963cafbf",
+		"lib/commands.js": "fb8c7c7b251c2f5ae69c73826611bb3eefdc4d9457a65385ad96f19f7b40cb7b",
 		"lib/cooldowns.js": "616e09ebbba3471c724d2a2ff33f12759626a666b55e4609d950aaccd10860aa",
-		"lib/core.js": "8d180449cc3083606ca8bb0543f382d645eb855ea035ccd9167c5a58b9fbc1a1",
+		"lib/core.js": "ceb3b1babb2fd0b295e64f312662ef29d48524d0635be87e68584d94b55568ee",
 		"lib/debug.js": "ec41283b76426dd4d5a32364ff17eda907dc48bea6edb50b37417a9603fe82c3",
 		"lib/index.js": "e326175467a782b9826c220901cf52597c739123ee568bfb47582f61662a4298",
 		"lib/ping.js": "85845d350f4bf42fc4a6edb3411f3f1182deaeca9f4c93b74c363ee000690b4b",
 		"lib/player.js": "166bd36a72c4aad367f31aac4fdb7af5a09854be48d7222b0e9d7e37c06e6667",
+		"lib/pvp.js": "cf5fadf74b36a9cadaf3a7a9e0afceef53d31307d1bc82fb8f3abb0e2cf6d4cf",
 		"lib/require.js": "d8fcd57f21ba1cea3d474688c994804b21676c6a4cb6a9dbc4ed929c79a37dac",
-		"migration.js": "2fbf34a9a9eae8d5f83783a0926894218949abb611fa7e3d2664a40c11f71674",
+		"migration.js": "86ec208ade16547b45663f433cebdd4bfde501b64e27e5c02419f643e19087da",
 		"module.config.json": "c0a16dfca2dc00eb2f4c5670a98fcc163fd4f85c34b04fe825e6c3e79de88ca1",
-		"module.json": "e573efb64a0acdc31050bb0b5c9008ddd229846fb6e90d9f5b9bb2f9790d11f2",
+		"module.json": "02430196891ced331964d8ac1e069bca1d13d6d55877273e749c28c8c6676fca",
 		"package.json": "dc71e6cb417e9f8430580f311ebee3df1d403cab5f80ac7ba492defd892e05f3"
 	}
 }
