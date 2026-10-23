@@ -4,7 +4,7 @@
     "name": "skill-prediction",
     "author": "Pinkie Pie / many others (46.05 port for PlayTera)",
     "description": "Simulates skills client-side, eliminating ping-based delays and animation lock. Built for PlayTera (patch 46.05).",
-    "version": "1.1.0-46.05",
+    "version": "1.2.0-46.05",
     "servers": [
       "https://raw.githubusercontent.com/ImakPwnz/playtera-mods/main/skill-prediction/"
     ],

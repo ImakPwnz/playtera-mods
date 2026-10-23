@@ -37,3 +37,26 @@ node _werkzeuge/manifest.js
   Hook und jedes gesendete Paket und spielt jeden konfigurierten Skill aller Vorlagen mit virtueller Uhr durch
   (Vorhersage, Serverbestätigung nach 30 ms, Ende, Zeitpunkt). Ersetzt **keine** Spielabnahme.
 - Umgebungsvariablen für den Prüfstand: `SP_TPL=10101` (nur eine Vorlage), `SP_DEBUG=1` (Debug-Ausgabe des Moduls).
+- Der Prüfstand enthält außerdem feste Fälle für die 46.05-Mechaniken (Umleiter, Buff-Ketten, Loslassen von
+  Haltetasten, Rückwirkung auf Berserker/Gunner) und die PvP-Sperre; Ergebnis unter `mechaniken4605` / `pvpSperre`.
+- Ohne PlayTera-Toolbox: Die öffentliche tera-toolbox (GitHub) reicht für die Ablaufprüfung. Dazu in
+  `<Toolbox>/data/data.json` die fehlenden 46.05-Definitionen (`S_LOGIN.12`, `S_INVEN.18`, `S_PLAYER_STAT_UPDATE.12`,
+  `S_EACH_SKILL_RESULT.13`, `S_ABNORMALITY_BEGIN.3`, `C_START_TARGETED_SKILL.6`, `C_START_INSTANCE_SKILL.5`,
+  `C_START_COMBO_INSTANT_SKILL.4`, `S_PARTY_MEMBER_LIST.7`, `S_CURRENT_CHANNEL.1`, `C_PLAYER_LOCATION.4`) aus der
+  tera-data-Historie als `protocol`-Einträge ergänzen. Fehlt die Opcode-Tabelle `302664`, vergibt der Prüfstand
+  Ersatz-Opcodes (Ausgabe `opcodes: ERSATZ`) – dann werden nur Ablauf und Definitionen geprüft, nicht die echten Opcodes.
+
+## Konfigurationsschlüssel für 46.05 (config/skills.js)
+
+Zusätzlich zu den bekannten Schlüsseln des Originals (`noInterrupt`, `fixedSpeed`, `stamina`, `categoryChains`, …):
+
+- `useAbnormalChains: true` – die `abnormalChains` aus `skills.json` (AddAbnormalityConnectSkill) werden ausgewertet:
+  ist einer der Buffs aktiv, wird auf die genannte Variante umgeleitet (Vorrang vor den Kategorie-Ketten, wie im
+  Original). Für die klassischen Klassen bleibt es aus, deren Konfiguration bildet die Buffs anders nach.
+- `changeDefault: <Unter-ID>` – Ziel eines `change`-Skills (reiner Umleiter ohne eigene Animation), wenn kein Buff und
+  keine Kette greift; ohne diesen Schlüssel bleibt der Skill beim Server. `change`-Skills mit eigener Animation
+  (z. B. Berserker 120100) brauchen ihn nicht.
+- `serverOnlyWithAbnormal: [ids]` – solange einer der Buffs aktiv ist, geht der Skill unverändert an den Server
+  (Brawler Counter nach perfektem Block, 10153060); dessen `S_CANNOT_START_SKILL` wird dann durchgereicht.
+- `categoryChains: {}` – schaltet die Kettenregeln der Daten für genau diesen Skill ab (Brawler 10130/10131/40130:
+  deren Regeln zeigen auf nicht existierende Skills und würden sonst weiter kaskadieren).

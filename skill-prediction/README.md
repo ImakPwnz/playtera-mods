@@ -56,9 +56,34 @@ Based on [rxkt/psp31](https://github.com/rxkt/psp31) (TERA classic 31.04), which
   (Warrior Command: Attack/Follow, fake buffs for Lancer/Slayer/Berserker chains).
 - Fixed: Backstab-type skills (`onlyTarget`) crashed on `C_START_SKILL` without a target list;
   passivity type 77 fell through into the stamina handling.
+- 1.2.0: Brawler and Ninja configuration; abnormality chains (opt-in), `change` redirectors, release of
+  redirected hold skills, `serverOnlyWithAbnormal` (see above). Behaviour of the other classes is unchanged
+  (checked with the test bench against the previous version).
 
-Classes with configuration: Warrior, Lancer, Slayer, Berserker, Sorcerer, Archer, Priest, Mystic, Reaper, Gunner.
-Brawler and Ninja have no configuration yet and are not predicted.
+Classes with configuration: Warrior, Lancer, Slayer, Berserker, Sorcerer, Archer, Priest, Mystic, Reaper, Gunner,
+Brawler, Ninja.
+
+## Brawler and Ninja (new in 1.2.0)
+
+Both classes are configured straight from the 46.05 server data (`config/skills.js`, sections 10 and 11). The
+module learned three 46.05 mechanics for them (`lib/core.js`):
+
+- **Buff-dependent variants** (`useAbnormalChains`): the server picks a skill variant by an active abnormality –
+  Growing Fury stacks for the Brawler (10153001-10153004), chi for the Ninja (10154000-10154006). The module tracks
+  those buffs and predicts the same variant.
+- **Redirector skills** (`changeDefault`): many Brawler skills start with an id that has no animation of its own
+  (type `change`) and leads to `-01` without and `-02` with Growing Fury. The config names the base variant.
+- **Press-and-hold skills that got redirected** (Brawler Counter 20100 → 20110/20111): the hold now ends correctly
+  when the button is released with the base id. This also fixes chained blocks of other classes.
+
+Left to the server on purpose (no prediction, no desync risk): Counter after a perfect block (buff 10153060, the
+counterattack is resolved by the server), the Brawler's 30 s channel, steerable charge (bulldozer), dash + run and
+grab (catchback); the Ninja's dashes/teleports (groups 4 and 6) and grab-like 70100; Retaliate for both.
+
+**Not yet verified in game** – please report in Discord if a skill misbehaves: rage/chi costs are not modelled (a
+skill the server rejects ends after the server timeout, like a skill on cooldown), and the Punch-after-another-skill
+variant (10130) is assumed not to chain any further. `/8 sp debug` shows what the module predicted and what the
+server answered.
 
 ## Credits
 
@@ -73,6 +98,10 @@ Modul für die TERA Toolbox, das Skills clientseitig vorwegnimmt, nur für PlayT
 Ordner `<Toolbox>\mods\skill-prediction` anlegen und nur `module.json` hineinlegen – die Toolbox lädt den Rest selbst
 und hält das Modul aktuell. Andere Skill-Prediction-Varianten entfernen, Toolbox neu starten.
 Die Skilldaten stammen aus den 46.05-Serverdaten; Skills ohne verlässliche Daten werden nicht vorhergesagt.
+**Brawler und Ninja** (ab 1.2.0): Konfiguration aus den 46.05-Daten, Varianten nach Growing-Fury- bzw. Chi-Buffs
+werden mit vorhergesagt. Bewusst beim Server belassen: Counter nach perfektem Block, der 30-s-Kanal, Sturmangriff,
+Dash und Griff des Brawlers, die Dashes des Ninja, Retaliate. Noch nicht im Spiel abgenommen – bitte Auffälligkeiten
+im Discord melden (`/8 sp debug` zeigt Vorhersage und Serverantwort).
 **PvP-Pause:** In Schlachtfeldern und in der offenen Welt auf Channel 2 (PvP) schaltet sich die Vorhersage von
 selbst ab, weil sie dort Desync verursacht; eine Chatmeldung (Sprache per `/8 sp pvp lang de`) zeigt das an.
 `/8 sp pvp` zeigt den Zustand, `/8 sp pvp off` schaltet die Pause ganz ab.

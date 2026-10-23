@@ -78,6 +78,7 @@ module.exports = function SPCore(mod) {
 		serverConfirmedAction = false,
 		pendingNotifyLocation = null,
 		storedCharge = 0,
+		serverOnlySkill = 0, // skill id deliberately left to the server (46.05 pass-through), its S_CANNOT_START_SKILL must reach the client
 		lastEndSkill = null,
 		lastEndReason = 0,
 		lastEndedId = 0,
@@ -234,7 +235,7 @@ module.exports = function SPCore(mod) {
 
 		handleDelay: {
 			// These types do not need delay; and in the case of button release, must NOT be ignored
-			if(type === 'C_NOTIMELINE_SKILL' || type === 'C_PRESS_SKILL' && !event.press && (!clientAction || clientAction.skill.equals(event.skill)))
+			if(type === 'C_NOTIMELINE_SKILL' || type === 'C_PRESS_SKILL' && !event.press && (!clientAction || sameSkillGroup(clientAction.skill, event.skill)))
 				break handleDelay
 
 			if(delayNext && Date.now() <= stageEndTime) {
@@ -286,6 +287,16 @@ module.exports = function SPCore(mod) {
 			endReason = 0
 
 		if(type === 'C_PRESS_SKILL' && !event.press) {
+			// 46.05 (Brawler Counter, chained blocks): the client releases with the base id while we hold the skill the
+			// server would have redirected to (20100 -> 20110). Match by group/level so the hold ends like a direct one.
+			if(clientAction && !clientAction.skill.equals(skill) && clientAction.skill.type === TYPE_ACTION && sameSkillGroup(clientAction.skill, skill)) {
+				const held = skillInfo(clientAction.skill)
+				if(held && ['defence', 'movingdefence', 'drain', 'presshit', 'movingcharge'].includes(held.dcType)) {
+					skill = clientAction.skill.clone()
+					info = held
+				}
+			}
+
 			if(clientAction && clientAction.skill.equals(skill)) {
 				if(['defence', 'movingdefence', 'drain', 'presshit'].includes(info.dcType)) {
 					updatePosition(event)
@@ -350,6 +361,13 @@ module.exports = function SPCore(mod) {
 			}
 
 			if(!doReleaseChain) return
+		}
+
+		// 46.05: some skills change their meaning with a buff the server resolves itself (e.g. Brawler Counter after a
+		// perfect block). While such a buff is active the skill is handed to the server unchanged.
+		if(info.serverOnlyWithAbnormal && [].concat(info.serverOnlyWithAbnormal).some(id => abnormality.exists(id))) {
+			passToServer(type, event, specialLoc)
+			return
 		}
 
 		if(!alive || abnormality.inMap(silence)) {
@@ -419,14 +437,14 @@ module.exports = function SPCore(mod) {
 
 		// 'connect' type skills (chains)
 		for(let i = 0, chain = info.userChain; i < 10; i++, chain = undefined) { // Limit recursion to prevent infinite loop
-			// not used for classic
-			// 1. Abnormality chains (prioritise in order of ID)
-			// if(chain == null)
-			// 	for(let id in info.abnormalChains)
-			// 		if(abnormality.exists(Number(id))) {
-			// 			chain = info.abnormalChains[id]
-			// 			break
-			// 		}
+			// 1. Abnormality chains (prioritised in order of ID, like the original module). Off for the classic classes
+			//    (their configs emulate the buffs differently); 46.05 Brawler/Ninja opt in with `useAbnormalChains`.
+			if(chain == null && info.useAbnormalChains && info.abnormalChains)
+				for(let id in info.abnormalChains)
+					if(abnormality.exists(Number(id))) {
+						chain = info.abnormalChains[id]
+						break
+					}
 
 			// 2. Skill chains
 			if(chain == null && clientAction) {
@@ -448,6 +466,10 @@ module.exports = function SPCore(mod) {
 				}
 			}
 
+			// 3. 'change' skills (46.05): pure redirectors without an animation of their own; without a matching buff/chain
+			//    the server picks the base variant, which the config names in `changeDefault`.
+			if(chain == null && info.dcType === 'change' && info.changeDefault != null) chain = info.changeDefault
+
 			if(chain != null) {
 
 				skill = chain > 99 ? new SkillID(chain) : modifyChain(skill, chain)
@@ -465,6 +487,11 @@ module.exports = function SPCore(mod) {
 				if(!endReason) endReason = END_REASONS[info.dcType] || END_REASONS[info.type] || 6
 				break
 			}
+		}
+
+		if(info.dcType === 'change' && info.length === undefined) { // redirector without own animation and no matching buff/chain/default: server
+			passToServer(type, event, specialLoc)
+			return
 		}
 
 		if(info.onlyDefenceSuccess)
@@ -894,6 +921,11 @@ module.exports = function SPCore(mod) {
 	})
 
 	mod.hook('S_CANNOT_START_SKILL', 4, event => {
+		if(serverOnlySkill && event.skill.id === serverOnlySkill) { // not emulated by us, the client needs the answer
+			serverOnlySkill = 0
+			return
+		}
+
 		if(skillInfo(event.skill.id)) {
 			if(mod.settings.skills.delayOnFail && mod.settings.skills.retryCount && clientAction && (!serverAction || !clientAction.skill.equals(serverAction.skill)) && event.skill.id === clientAction.skill.id)
 				delayNext += mod.settings.skills.retryMs
@@ -1021,6 +1053,8 @@ module.exports = function SPCore(mod) {
 	}
 
 	function startAction(opts) {
+		serverOnlySkill = 0
+
 		const info = opts.info,
 			// Must clone opts before sendActionStage() modifes it
 			fxOpts = opts.stage || info.dcType === 'dash' || info.projectiles ? Object.assign({}, opts) : null
@@ -1457,6 +1491,17 @@ module.exports = function SPCore(mod) {
 		return pos
 	}
 
+	// Leaves a configured skill to the server (position bookkeeping only, packet passes unchanged)
+	function passToServer(type, event, specialLoc) {
+		if(type !== 'C_NOTIMELINE_SKILL') updatePosition(event, false, specialLoc)
+		serverOnlySkill = event.skill.id
+	}
+
+	// Same group and level (xxxyy__): true for a skill and its chain/redirect variants
+	function sameSkillGroup(a, b) {
+		return a.type === b.type && Math.floor(a.id / 100) === Math.floor(b.id / 100)
+	}
+
 	// Modifies the chain part (last 2 digits) of a skill ID
 	function modifyChain(skill, chain) {
 		(skill = skill.clone()).id += chain - (skill.id % 100)
@@ -1478,6 +1523,8 @@ module.exports = function SPCore(mod) {
 		if(!clientData) return false
 		for(let i = info.length - 1; i >= 0; i--)
 			if(info[i] && info[i].length !== undefined) return true
+		if(clientData.dcType === 'change') // redirector: emulated only when the config says where it leads by default
+			return info.some(i => i && i.changeDefault != null)
 		return TIMELESS_TYPES.has(clientData.dcType)
 	}
 

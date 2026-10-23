@@ -2080,5 +2080,238 @@ module.exports = {
 			//'*': { fixedSpeed: true, triggerAbnormal: { 10152010: 3100, 10152012: 3100, 10152354: 4000 }, forceClip: true },
 			//0: true // 400100
 		//}
+	},
+	10: { // Brawler (PlayTera 46.05: human female only, template 10211)
+		/*	Built from the 46.05 server data (config/skills.json, every entry x: 1), not from an older module:
+			- Lengths, distances, speeds (fixedSpeed) and the skill chains (categoryChains) come from the data.
+			- Growing Fury: skills whose first id is a pure redirector ("change") lead to the -01 variant without
+			  stacks and to the -02 variant with stacks (abnormalities 10153001-10153004, from AddAbnormalityConnectSkill).
+			  `useAbnormalChains` switches this resolution on, `changeDefault` names the variant without a buff
+			  (the data only carries the buffed targets).
+			- Not predicted (server stays authoritative): Counter after a perfect block (buff 10153060, the follow-up
+			  attack 20112/20101-20104 is resolved by the server), the 30 s channel 30100, the steerable charge 50100
+			  (bulldozer), the dash 170100 + run 170110, the grab 200100 (catchback) and Retaliate 120100 (like all classes).
+			- The "chain punch" variants 10130/10131 and 40130 carry chain rules in the data that point to skills
+			  which do not exist (10104) or to another group (20101); they are treated as data noise and switched
+			  off so a Punch after another skill stays 10130 and does not cascade further.
+			Rage costs are not modelled: a skill the server rejects for lack of rage ends after the server timeout
+			(same behaviour as a skill on cooldown for every other class). */
+		'*': { useAbnormalChains: true },
+		1: { // Punch (4-hit combo, 10130-10132 = Punch chained from another skill / with Growing Fury 2-3)
+			0: true, // 10100 (connect) -> 10101-10103 by combo stage, 10130 after any other skill, 10131 with Growing Fury 2-3
+			1: true, // 10101
+			2: true, // 10102
+			3: true, // 10103
+			30: { categoryChains: {} }, // 10130
+			31: { categoryChains: {} }, // 10131
+			32: true // 10132
+		},
+		2: { // Counter (block, press and hold)
+			0: { changeDefault: 10, serverOnlyWithAbnormal: [10153060] }, // 20100 -> 20110, with Growing Fury 20111; after a perfect block the server decides
+			1: false, // 20101-20104: counterattack by Punch stage, only reached through 20112 (server)
+			2: false,
+			3: false,
+			4: false,
+			10: true, // 20110 (presshit, hold)
+			11: true, // 20111 (presshit, hold, Growing Fury)
+			12: false // 20112 (counterattack after a perfect block)
+		},
+		3: false, // 30100: 30 s channel ended by the server; 30101 (3 stages) is only reached through it
+		4: { // heavy attack (3.2 s, no movement)
+			0: true, // 40100 (connect) -> 40130 after any brawler attack
+			30: { categoryChains: {} } // 40130
+		},
+		5: false, // 50100: steerable charge (bulldozer), movement is driven by the client
+		6: { // Growing Fury skill, two stages (step + strike, 171 units)
+			0: { changeDefault: 1 }, // 60100 -> 60101 / 60102 (Growing Fury)
+			1: true, // 60101 (connect) -> 60130 after any brawler attack, 60131 with buff 31120
+			2: true, // 60102
+			30: true, // 60130
+			31: true // 60131
+		},
+		7: { // quick strike (105 units)
+			0: true, // 70100 (connect) -> 70130 after any brawler attack
+			30: true // 70130
+		},
+		8: { // Growing Fury skill (165 units)
+			0: { changeDefault: 1 }, // 80100 -> 80101 / 80102
+			1: true, // 80101 (connect) -> 80130 / 80131
+			2: true, // 80102
+			30: true, // 80130
+			31: true // 80131
+		},
+		9: { // Growing Fury skill (fixed speed)
+			0: { changeDefault: 1 }, // 90100 -> 90101 / 90102
+			1: true, // 90101 (connect) -> 90130 / 90131
+			2: true, // 90102
+			30: true, // 90130
+			31: true // 90131
+		},
+		10: { // leaping strike (155 units)
+			0: true, // 100100 (connect) -> 100130 after any brawler attack
+			30: true // 100130
+		},
+		12: { // Retaliate
+			0: false // 120100 (stand): server, like every other class
+		},
+		13: { // Growing Fury self skill (moving)
+			0: { changeDefault: 1 }, // 130100 -> 130101 / 130102
+			1: true, // 130101
+			2: true // 130102
+		},
+		14: { // Growing Fury self skill
+			0: { changeDefault: 1 }, // 140100 -> 140101 / 140102
+			1: true, // 140101 (connect) -> 140130
+			2: true, // 140102
+			30: true // 140130
+		},
+		15: { // charge strike (133 units)
+			0: true, // 150100 (connect) -> 150130 after any brawler attack
+			30: true // 150130
+		},
+		16: { // Growing Fury skill (134 units)
+			0: { changeDefault: 1 }, // 160100 -> 160101 / 160102
+			1: true, // 160101 (connect) -> 160130
+			2: true, // 160102
+			30: true // 160130
+		},
+		17: false, // 170100 dash + 170110 run (294 units): server
+		18: { // Growing Fury skill
+			0: { changeDefault: 1 }, // 180100 -> 180101 / 180102
+			1: true, // 180101 (connect) -> 180130
+			2: true, // 180102
+			30: true // 180130
+		},
+		19: { // Growing Fury self skill (moving)
+			0: { changeDefault: 1 }, // 190100 -> 190101 / 190102
+			1: true, // 190101
+			2: true // 190102
+		},
+		20: false, // 200100: grab (catchback), position depends on the target
+		21: { // Growing Fury self skill (moving)
+			0: { changeDefault: 1 }, // 210100 -> 210101 / 210102
+			1: true, // 210101
+			2: true // 210102
+		},
+		40: { // evade (144 units, fixed speed)
+			0: true // 400100
+		}
+	},
+	11: { // Ninja (PlayTera 46.05: Elin only, template 11012)
+		/*	Built from the 46.05 server data like the Brawler. Chi: the Combo Attack and some skills have variants
+			that the server picks by the chi abnormalities 10154000-10154006 (useAbnormalChains); every other chain
+			comes from the data (category 900 = any ninja skill). Not predicted: the dashes 40101/40102 and 60101
+			(teleport-like, the follow-up hits 40110/40111/60110 are only reached through them), the grab-like 70100
+			(catchback) and Retaliate 100100. */
+		'*': { useAbnormalChains: true },
+		1: { // Combo Attack (6 variants by chi, 10130 after another skill)
+			0: true, // 10100 (connect) -> 10101-10106 by chi, 10130 after any ninja skill
+			1: true, // 10101
+			2: true, // 10102
+			3: true, // 10103
+			4: true, // 10104
+			5: true, // 10105
+			6: true, // 10106
+			30: true, // 10130
+			40: true, // 10140 (connect) -> 10141-10146 by chi, 10170 after any ninja skill
+			41: true, // 10141
+			42: true, // 10142
+			43: true, // 10143
+			44: true, // 10144
+			45: true, // 10145
+			46: true, // 10146
+			70: true // 10170
+		},
+		2: { // evade (175 units, fixed speed)
+			0: true, // 20100
+			30: true // 20130
+		},
+		3: { // throw (projectile 30120)
+			0: true, // 30100 (connect) -> 30130 after any ninja skill
+			20: true, // 30120 (userslug)
+			30: true // 30130
+		},
+		4: false, // 40100 -> 40101/40102 dash to the target, 40110/40111 follow-up hits: server
+		5: { // leaping strike (292 units)
+			0: true, // 50100 (connect) -> 50130 after any ninja skill
+			20: true, // 50120 (userslug)
+			21: true, // 50121 (projectile)
+			30: true // 50130
+		},
+		6: false, // 60100 -> 60101 dash, 60110 strike: server
+		7: false, // 70100: catchback, position depends on the target
+		8: { // leap attack, 3 stages (jump 367 units, landing, recovery)
+			0: true, // 80100 (connect) -> 80130 after any ninja skill, 80101/80102 by chi
+			1: true, // 80101
+			2: true, // 80102
+			30: true // 80130
+		},
+		9: { // throw (projectile 90120)
+			0: true, // 90100 (connect) -> 90130 after any ninja skill
+			20: true, // 90120 (projectile)
+			30: true // 90130
+		},
+		10: { // Retaliate
+			0: false // 100100 (stand): server, like every other class
+		},
+		11: { // stance switch
+			0: true, // 110100
+			50: true // 110150
+		},
+		12: { // strike with own animation (155 units) and chi variant
+			0: true, // 120100 (change with own stages) -> 120102 with chi
+			1: true, // 120101 (connect) -> 120130 after any ninja skill
+			2: true, // 120102
+			30: true // 120130
+		},
+		13: { // long strike (245 units)
+			0: { changeDefault: 1 }, // 130100 -> 130101 / 130102 with chi
+			1: true, // 130101 (connect) -> 130130
+			2: true, // 130102
+			30: true // 130130
+		},
+		14: { // strike (162 units)
+			0: { changeDefault: 1 }, // 140100 -> 140101 / 140102 with chi
+			1: true, // 140101 (connect) -> 140130
+			2: true, // 140102
+			30: true // 140130
+		},
+		15: { // rapid combo (10 hits)
+			0: true, // 150100
+			1: true, // 150101
+			2: true, // 150102
+			3: true, // 150103
+			4: true, // 150104
+			5: true, // 150105
+			6: true, // 150106
+			7: true, // 150107
+			8: true, // 150108
+			9: true, // 150109
+			20: true // 150120 (projectile)
+		},
+		16: { // cast (fixed speed, projectiles 160120/160121)
+			0: true, // 160100 (connect) -> 160130 after any ninja skill
+			20: true, // 160120
+			21: true, // 160121
+			30: true // 160130
+		},
+		17: { // self skill
+			0: true, // 170100 (connect) -> 170130
+			30: true // 170130
+		},
+		18: { // strike with projectiles (69 units)
+			0: true, // 180100 (connect) -> 180130 after any ninja skill
+			20: true, // 180120
+			21: true, // 180121
+			22: true, // 180122
+			30: true // 180130
+		},
+		19: { // two-stage strike (26 + 128 units)
+			0: true, // 190100 (connect) -> 190130 after any ninja skill
+			30: true // 190130
+		},
+		20: { // ground target (instance); length from patch 100 data, no 46.05 animation
+			0: true // 200100
+		}
 	}
 }
